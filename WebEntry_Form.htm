@@ -1,0 +1,1187 @@
+<html>
+<head>
+<!--
+*************************************************************
+** Copyright 1998 - 2021, Pachyderm.  All Rights Reserved. **
+*************************************************************
+-->
+
+<title>2021 - madness@spencersRus.com Web Entry Form</title>
+<style type=text/css>
+
+A.bTm:visited {color: #000000; text-decoration: none;FONT-WEIGHT: bolder;}
+A.bTm:link {color: #000000; text-decoration: none;FONT-WEIGHT: bolder;}
+A.bTm:hover {COLOR: #990000; text-decoration: none;FONT-WEIGHT: bolder;}
+A.bTm:active {color: #000000; text-decoration: none;FONT-WEIGHT: bolder;}
+A.bTm {position:relative;FONT-WEIGHT: bolder;}
+
+.title {FONT-SIZE: 23px;COLOR: #0B3053;FONT-FAMILY: Arial;FONT-WEIGHT: bold;FONT-STYLE: italic;TEXT-ALIGN: center;}
+TH {FONT-SIZE: 11px;COLOR: #FFFFFF;FONT-FAMILY: Arial;FONT-WEIGHT: normal;FONT-STYLE: normal;TEXT-ALIGN: Center;BACKGROUND-COLOR: #000066;}
+.bk_clr2 {
+	BACKGROUND-COLOR: #FFFBDE;
+	font-family: Arial;
+	font-size: 11px;
+	font-style: normal;
+	font-weight: normal;
+}
+.bk_clr1 {
+	BACKGROUND-COLOR: #E1DEC2;
+	font-family: Arial;
+	font-size: 11px;
+	font-style: normal;
+	font-weight: normal;
+}
+.bkt_header {BACKGROUND-COLOR: #C0C0C0;}
+A:visited {FONT-SIZE: 11px;COLOR: #0B3053;FONT-FAMILY: Arial;FONT-WEIGHT: normal;FONT-STYLE: normal;}
+A:hover {FONT-SIZE: 11px;COLOR: #0B3053;FONT-FAMILY: Arial;FONT-WEIGHT: normal;FONT-STYLE: normal;}
+A:link {FONT-SIZE: 11px;COLOR: #0B3053;FONT-FAMILY: Arial;FONT-WEIGHT: normal;FONT-STYLE: normal;}
+
+.fld_bk_wht {
+	BACKGROUND-COLOR: #FFFFFF;
+	font-family: Arial;
+	font-size: 11px;
+	font-style: normal;
+	font-weight: normal;
+}
+.fld_bk_clr {
+	BACKGROUND-COLOR: #D6D6D6;
+	font-family: Arial;
+	font-size: 11px;
+	font-style: normal;
+	font-weight: normal;
+}
+.required {
+	font-family: Arial;
+	font-size: 11px;
+	font-style: italic;
+	font-weight: normal;
+	color: #990000;
+}
+
+</style>
+<script language="JavaScript" type="text/JavaScript">
+// Initialize the bracket
+var NUMBER_OF_TEAMS = 68;
+var NUMBER_OF_GAMES = 67;
+var NUMBER_OF_BRACKETS = 135;
+
+//var usingFirstFour = true;
+//var firstFourStr=",2,18,34,50,"; // "2,18,34,50";
+
+// Obtained from OfficePool Mac App 
+usingFirstFour = false; var firstFourStr=",,,,,";var firstFourDisplayedOnTop=false;
+
+var firstFourTeamID = firstFourStr.split(",");
+
+//if (firstFourTeamID[1] == '') alert( firstFourTeamID[1] + '; ' + firstFourTeamID[2] );
+
+var pick = new Array(NUMBER_OF_GAMES);
+for(index=0; index <= NUMBER_OF_GAMES; index++) { 
+	pick[index]=0;
+	}
+
+// Used to prevent user from advancing teams which shouldn't be advanced
+var resetting_picks = false;
+var user_warned = false;
+function Initialize_Bracket() {
+	document.Web_Entry.reset();
+	advanceToTheResults();
+	}
+
+
+// This will display all the teams on the bracket
+function entryMap(index) {
+	var map = 0;
+
+	if (index == firstFourTeamID[1]) {
+		map = 64;
+	}
+	else if (index == firstFourTeamID[2]) {
+		map = 65;
+	}
+	else if (index == firstFourTeamID[3]) {
+		map = 66;
+	}
+	else if (index == firstFourTeamID[4]) {
+		map = 67;
+	}
+	else {
+		map = index-64;
+	}
+	return map;
+}
+
+var bracketIdx = new Array(NUMBER_OF_BRACKETS);
+for(index=1; index <= NUMBER_OF_BRACKETS; index++) { 
+	bracketIdx[index]=index+0;
+}
+	
+function writeTeam(index) {
+	// choseID will be: 1,1,2,2,3,3,4,4,5,5,etc
+	choseID = Math.floor((index+1)/2);
+	teamID = index;
+	// Need to determine if this is a firstFour index.
+	// If it is, it's differnt code
+	if (usingFirstFour && (teamID == firstFourTeamID[1] || teamID == firstFourTeamID[2] || teamID == firstFourTeamID[3] || teamID == firstFourTeamID[4])) {
+		html = '<a id=entry' + entryMap(index) + ' href="javascript:Chose_Tm(' + choseID + ',' + teamID + ');" class="bTm">&nbsp;</a>';
+	}
+	else if (index > 127) {
+		// These are for the first four teams 128-135
+		// I think these need to be built separetly
+		teamID = index-63;
+		choseID = 0;
+		html = '<a href="javascript:Chose_Tm(' + choseID + ',' + teamID + ');" class="bTm">&nbsp;</a>';
+	}
+	else if (index == 127) { // it's the Champ pick, no clickable link
+		html = '<a id=entry' + entryMap(index) + ' class="bTm">&nbsp;</a>';
+	} 
+	else if (index > 64) {
+		teamID = index-64;
+		html = '<a id=entry' + entryMap(index) + ' href="javascript:Chose_Tm(' + choseID + ',' + teamID + ');" class="bTm">&nbsp;</a>';
+	}
+	else {
+		html = '<a href="javascript:Chose_Tm(' + choseID + ',' + teamID + ');" class="bTm">' + team[index] + ' ' + rec[index] + '</a>';
+		
+		// <a id=entry1 href="javascript:Chose_Tm(33,1);" class="bTm">&nbsp;</a>
+	}
+	return 	html;
+}
+var firstFourGameResult;
+function firstFourPick(teamID, choseID) {
+	if (!usingFirstFour) { return false; }
+	
+	if (teamID==firstFourTeamID[1] && choseID==nextgame[64]) { firstFourGameResult = 64; return true; }
+	if (teamID==firstFourTeamID[2] && choseID==nextgame[65]) { firstFourGameResult = 65; return true; }
+	if (teamID==firstFourTeamID[3] && choseID==nextgame[66]) { firstFourGameResult = 66; return true; }
+	if (teamID==firstFourTeamID[4] && choseID==nextgame[67]) { firstFourGameResult = 67; return true; }
+}
+
+function drawTableCells(index, column) {
+	var bktIsUsingFirstFour = false;
+	var html = '';
+	var spc = '';
+	if (bktIsUsingFirstFour) {
+		spc = '<p>&nbsp;</p><p>&nbsp;</p>';
+	}
+
+	if (usingFirstFour && firstFourTeamID[index] != '' && !firstFourDisplayedOnTop) { bktIsUsingFirstFour = true; }
+	switch (column)
+	{
+	case 1:
+		if (bktIsUsingFirstFour) {
+			html = '<table cellpadding="2" cellspacing="1" class="bkt_header"><tr><td align="center" nowrap class="fld_bk_clr">First<br>Four</td></tr></table><br>';
+		}
+		
+		html += '(1)<br>(16)';
+		break;
+	case 2:
+		if (bktIsUsingFirstFour) {
+			html = '<table cellpadding="2" cellspacing="1" class="bkt_header"><tr><td align="center" nowrap class="fld_bk_clr">'
+				+ seed[index+64] + '<br>' + seed[firstFourTeamID[index]] + '</td><td class="fld_bk_clr" nowrap>' // need to use seeds here, as 65,64 will not always be here
+				+ '<a href="javascript:Chose_Tm(' + eval(index+63) + ',' + eval(index+64) + ');" class="bTm">'
+				+ team[index+64] + ' ' + rec[index+64] + '</a><br>'
+				+ '<a href="javascript:Chose_Tm(' + eval(index+63) + ',' + firstFourTeamID[index] + ');" class="bTm">'
+				+ team[firstFourTeamID[index]] + ' ' + rec[firstFourTeamID[index]] 
+				+ '</a></td></tr></table><br>';
+		}
+		
+		html += writeTeam(bracketIdx[16*index-15]) + '<br>' + writeTeam(bracketIdx[16*index-14]);
+		break;
+	case 3:
+		html = spc + writeTeam(bracketIdx[8*index+57]);
+		break;
+	case 4:
+		html = spc + writeTeam(bracketIdx[4*index+93]);
+		break;
+	case 5:
+		html = spc + writeTeam(bracketIdx[2*index+111]);
+		break
+	case 6:
+		html = spc + writeTeam(bracketIdx[index+120]);
+		break;
+	}
+		
+	return html;
+}
+
+// This function adances the team the user has selected.
+function Chose_Tm(choseID, aTeamID) {
+	var teamID = Math.abs(aTeamID);	
+	var id="entry"+choseID;
+    var currpick = pick[choseID];  // 0 is default
+	// make sure this pick can be changed
+	if (!resetting_picks && userpick[choseID] != 0) {
+		if (!user_warned) {
+			alert( "Game has completed. You can not advance this team.\n\nThis message will not be shown again.");
+			}
+		user_warned = true;
+		return;
+		}
+	
+	// should user be limited to which games can be filled out?
+	// Need to always allow first four (choseID = 64-68)
+	if (choseID < 64) {
+		if (!resetting_picks && choseID > limitGamesToIndex) {
+			alert( "You can not advance this team as picks are limited to the first " + limitGamesToIndex + " games.\n\nSee the rules at the top or contact your pool manager for more information.");
+			return;
+		}
+	}
+
+	if (choseID > 32 && choseID < 64) { // Second round pick or higher
+       teamID = pick[teamID];
+       if (teamID == 0) {return;}
+	}
+	else if (firstFourPick(teamID, choseID)) {
+		// Key for making this work
+		// This means that this is the second pick for a firstFour game (i.e, round 2)
+		//teamID = pick[teamID-firstFourTeamID[1]+64]; // i.e, pick[64, 65, 66, 67]
+		teamID = pick[firstFourGameResult];
+		//alert("choseID=" + choseID + "; teamID=" + teamID + "; id=" + id + "; currpick=" + currpick);
+		if (teamID == 0) {return;}
+	}
+	
+    if (currpick == teamID) {return;};
+    var text=team[teamID];
+    pick[choseID] = teamID;
+
+	// Use a different color for user picks
+	if (userpick[choseID] == 0) {
+		text = '<span style="color:#990000">' + text + '</span>';
+		}
+	//if (choseID == 67) alert(id);
+    Print_Tm(id, text);
+
+    var nextround = choseID;
+    while (nextround != 63) { // This Prints the next games if already filled in
+       var nextroundpick = pick[nextgame[nextround]];
+       if (nextroundpick != 0){
+          if (nextroundpick == currpick){
+             if (nextroundpick != teamID){ // was -1
+                pick[nextgame[nextround]] = teamID; // was -1
+                Print_Tm("entry"+nextgame[nextround],text);
+             }
+          }
+       }
+       nextround = nextgame[nextround];}
+   }
+
+// This function will write some stuff ... may need to re-write this.
+function Print_Tm(id, text)
+    {if (document.layers){
+       var l = document[id];
+       if (!l.ol) {
+          var ol = l.ol = new Layer (l.clip.width, l);
+          ol.clip.width = l.clip.width;
+          ol.clip.height = l.clip.height;
+          ol.bgColor = l.bgColor;
+          l.visibility = 'hide';
+          ol.visibility = 'show';}
+       var ol = l.ol;
+       out = " ";
+       add = "&nbsp;";
+       teamtext = "" + text;
+          while (teamtext.indexOf(out)>-1){
+           pos= teamtext.indexOf(out);
+           teamtext = "" + (teamtext.substring(0, pos) + add +
+           teamtext.substring((pos + out.length), teamtext.length));}
+       ol.document.open();
+       ol.document.write('<span class="bk_clr2">'+teamtext+'</span>');
+       ol.document.close();
+       ol.clip.width=l.clip.width=ol.document.width;
+       ol.clip.height=l.clip.height=ol.document.height;}
+    else if (document.all || document.getElementById) {
+      if (document.all)
+         document.all[id].innerHTML = text;
+      else {
+         var l = document.getElementById(id);
+         var r = document.createRange();
+         r.setStartAfter(l);
+         var docFrag = r.createContextualFragment(text);
+         while (l.hasChildNodes())
+            l.removeChild(l.firstChild);
+            l.appendChild(docFrag);}
+      }
+  }
+
+var spacer='&nbsp;';
+if(document.layers){
+   for(counter=2; counter <= 15; counter++)
+      {spacer=spacer+'&nbsp;'}
+   origWidth=innerWidth;
+   origHeight=innerHeight;
+   onresize=function(){
+      if(innerWidth!=origWidth||innerHeight!=origHeight)
+         location.reload()}
+   }
+
+var nextgame = new Array(68);
+nextgame[64] = firstFourTeamID[1]/2;
+nextgame[65] = firstFourTeamID[2]/2;
+nextgame[66] = firstFourTeamID[3]/2;
+nextgame[67] = firstFourTeamID[4]/2;
+nextgame[1] = nextgame[2] = 33;
+nextgame[3] = nextgame[4] = 34;
+nextgame[5] = nextgame[6] = 35;
+nextgame[7] = nextgame[8] = 36;
+nextgame[9] = nextgame[10] = 37;
+nextgame[11] = nextgame[12] = 38;
+nextgame[13] = nextgame[14] = 39;
+nextgame[15] = nextgame[16] = 40;
+nextgame[17] = nextgame[18] = 41;
+nextgame[19] = nextgame[20] = 42;
+nextgame[21] = nextgame[22] = 43;
+nextgame[23] = nextgame[24] = 44;
+nextgame[25] = nextgame[26] = 45;
+nextgame[27] = nextgame[28] = 46;
+nextgame[29] = nextgame[30] = 47;
+nextgame[31] = nextgame[32] = 48;
+nextgame[33] = nextgame[34] = 49;
+nextgame[35] = nextgame[36] = 50;
+nextgame[37] = nextgame[38] = 51;
+nextgame[39] = nextgame[40] = 52;
+nextgame[41] = nextgame[42] = 53;
+nextgame[43] = nextgame[44] = 54;
+nextgame[45] = nextgame[46] = 55;
+nextgame[47] = nextgame[48] = 56;
+nextgame[49] = nextgame[50] = 57;
+nextgame[51] = nextgame[52] = 58;
+nextgame[53] = nextgame[54] = 59;
+nextgame[55] = nextgame[56] = 60;
+nextgame[57] = nextgame[58] = 61;
+nextgame[59] = nextgame[60] = 62;
+nextgame[61] = nextgame[62] = 63;
+
+
+function All_Picks_Are_Made() {
+    all_picks_made=true;
+    for(index=1; index <= limitGamesToIndex; index++) { 
+    	if (pick[index] == 0) {all_picks_made=false;}
+	}
+		
+	// Check First Four
+	if (usingFirstFour) {
+		for(index=64; index <= 68; index++) { 
+			if (pick[index] == 0 && firstFourTeamID[index-63] != '') {all_picks_made=false;}
+		}
+	}
+    return all_picks_made;
+}
+
+function validEmail() {
+	//var emailRegEx = /^([a-zA-Z0-9_\.\-\+])+\@(([a-zA-Z0-9\-])+\.)+[a-zA-Z0-9]{2,4}$/;
+	var emailRegEx = /^[a-zA-Z0-9_\+-]+(\.[a-zA-Z0-9_\+-]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.([a-zA-Z]{2,4})$/;
+	str=document.Web_Entry.field1.value;
+	if (str.match(emailRegEx)) {
+		return true;
+	}
+	return false;
+}
+
+function confirmEmail() {
+	// check to see if the element is on the form
+	var LinkaExists = document.getElementById('confirmEmail');
+	if ( LinkaExists )
+	{
+		// make sure they match
+		str1=document.Web_Entry.field1.value;
+		str2=document.Web_Entry.confirmEmail.value;
+		if ( str1==str2 ) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	return true;
+}
+
+function Check_Bracket() { 
+    error=false;
+	if (!confirmEmail()) {error=true;}
+	if (error) {alert("Email Address and Confirm Email fields must match."); return false;};
+
+// Obtained from OfficePool Mac App 
+if (document.Web_Entry.field0.value==''){error=true;}
+if (error) {alert("Name is a required field"); return false;};if (document.Web_Entry.field1.value==''){error=true;}
+if (error) {alert("Email is a required field"); return false;};if (document.Web_Entry.field5.value==''){error=true;}
+if (error) {alert("Words to Live By ... is a required field"); return false;};
+
+	if (document.Web_Entry.field0.value=='') {error=true;}
+	if (error) {alert("Display Name is a required field"); return false;};if (document.Web_Entry.field1.value==''){error=true;}
+	if (error) {alert("Email is a required field"); return false;};
+
+	if (! All_Picks_Are_Made()) {error=true;}
+	if (error) {alert("Some picks are missing. The entire bracket must be completed before you can submit them."); return false;};
+	
+	if (document.Web_Entry.elements['tiebreaker']) {
+		if (document.Web_Entry.tiebreaker.value==''){error=true;}
+		if (error) {alert("Must fill in a tiebreaker"); return false;};
+	}
+
+	// Now let's accumulate all the picks data and store it in picks_data
+	var pData = "";
+	if (advanceResults) {
+		// need to reset some of the picks so they are negative
+		for(index=1; index <= NUMBER_OF_GAMES; index++) { 
+			if (userpick[index] != 0) {
+				pick[index] = -pick[index];
+			}
+		}
+	}
+
+    for(index=1; index <= NUMBER_OF_GAMES; index++) { 
+    	pData = pData + pick[index] + ",";
+	}
+		
+	pData = pData.substring(0,pData.length-1); // remove last ','
+	document.Web_Entry.picks_data.value = pData;
+	
+	// Do the same for team_data and region_data
+	var tData = "";
+    for(index=1; index <= NUMBER_OF_TEAMS; index++) { 
+    	tData = tData + team[index] + ",";
+	}
+	tData = tData.substring(0,tData.length-1);
+	document.Web_Entry.team_data.value = tData;
+	tData = "";
+    for(index=0; index <= 3; index++) { 
+    	tData = tData + regions[index] + ",";
+	}
+	tData = tData.substring(0,tData.length-1);
+	document.Web_Entry.region_data.value=tData;
+
+	// First Four Data
+	document.Web_Entry.firstFour_data.value=usingFirstFour + firstFourStr;
+
+	// Now need to get in correct format for OfficePool to read
+	//CRLF = chr(13)+Chr(10);
+	CRLF = "\r\n";
+	if (document.Web_Entry.elements['field0']) {
+		webentrydata = "JavaName:" + document.Web_Entry.field0.value + ":END" + CRLF; }
+	if (document.Web_Entry.elements['field1']) {
+		webentrydata = webentrydata + "JavaEmail:" + document.Web_Entry.field1.value + ":END" + CRLF; }
+	if (document.Web_Entry.elements['tiebreaker']) {
+		webentrydata = webentrydata + "JavaTiebreaker:" + document.Web_Entry.tiebreaker.value + ":END" + CRLF; }
+	if (document.Web_Entry.elements['field2']) {
+		webentrydata = webentrydata + "JavaInfo1:" + document.Web_Entry.field2.value + ":END" + CRLF; }
+	if (document.Web_Entry.elements['field3']) {
+		webentrydata = webentrydata + "JavaInfo2:" + document.Web_Entry.field3.value + ":END" + CRLF; }
+	if (document.Web_Entry.elements['field4']) {
+		webentrydata = webentrydata + "JavaInfo3:" + document.Web_Entry.field4.value + ":END" + CRLF; }
+	if (document.Web_Entry.elements['field5']) {
+		webentrydata = webentrydata + "JavaInfo4:" + document.Web_Entry.field5.value + ":END" + CRLF; }
+	if (document.Web_Entry.elements['field6']) {
+		webentrydata = webentrydata + "JavaInfo5:" + document.Web_Entry.field6.value + ":END" + CRLF; }
+	if (document.Web_Entry.elements['picks_data']) {
+		webentrydata = webentrydata + "JavaData:" + document.Web_Entry.picks_data.value + ":END" + CRLF; }
+	document.Web_Entry.webentry_data.value=webentrydata;
+
+    return true;
+}
+
+function doClear() {
+	res=confirm("Are you sure you want to clear all picks?");
+	if(!res) return;
+	resetting_picks = true;
+	for(index=1; index <= NUMBER_OF_GAMES; index++) { 
+  		Chose_Tm(index,0);
+		}
+	advanceToTheResults();
+	}
+
+// Used to pick the favorites
+var favs = new Array(NUMBER_OF_GAMES);
+for(index=1; index <= 32; index++) { 
+	favs[index] = 2*index-1;
+	}
+favs[33]=1;favs[34]=4;favs[35]=6;favs[36]=8;
+favs[37]=9;favs[38]=12;favs[39]=14;favs[40]=16;
+favs[41]=17;favs[42]=20;favs[43]=22;favs[44]=24;
+favs[45]=25;favs[46]=28;favs[47]=30;favs[48]=32;
+favs[49]=33;favs[50]=36;favs[51]=37;favs[52]=40;
+favs[53]=41;favs[54]=44;favs[55]=45;favs[56]=48;
+favs[57]=49;favs[58]=51;favs[59]=53;favs[60]=55;
+
+// Final Four Winners
+favs[61]=49;favs[62]=53;favs[63]=61;
+
+// First Four Winners
+favs[64]=firstFourTeamID[1];
+favs[65]=firstFourTeamID[2];
+favs[66]=firstFourTeamID[3];
+favs[67]=firstFourTeamID[4];
+
+
+function pickFavorites() {
+	res=confirm('Are you sure you want to pick higher seeds to win?\n (This will replace any picks you have made.)');
+	if(!res) return;
+	
+	// First round games
+	advanceToTheResults();
+		
+	// Aways do the First Four	
+	for (index=64; index <= 67; index++) { 
+		if (userpick[index]==0)
+  			Chose_Tm(index,favs[index]);
+		}
+		
+	var numGames = 63;
+	if (limitGamesToIndex < 63)
+		numGames = limitGamesToIndex;
+
+	for (index=1; index <= numGames; index++) { 
+		if (userpick[index]==0)
+  			Chose_Tm(index,favs[index]);
+		}
+	}
+		
+var advanceResults = false;
+function advanceToTheResults() {
+	resetting_picks = true;
+	// Do first Four First
+	for(index=64; index <= NUMBER_OF_GAMES; index++) { 
+  		Chose_Tm(index,userpick[index]);
+	}
+	// Then dd the others
+	for(index=1; index <= 63; index++) { 
+  		Chose_Tm(index,userpick[index]);
+	}
+	for(index=1; index <= NUMBER_OF_GAMES; index++) { 
+		if (userpick[index] != 0) {
+			advanceResults = true;
+			break;
+		}
+	}
+	resetting_picks = false;
+}
+
+var rec = new Array(NUMBER_OF_TEAMS);
+var team = new Array(NUMBER_OF_TEAMS);
+var seed = new Array(NUMBER_OF_TEAMS);
+var regions = new Array(3);
+var userpick = new Array(NUMBER_OF_GAMES);
+team[0]="";
+
+// Obtained from OfficePool Mac App
+// Also includes userPicks, regions and limitGamesToIndex
+team[1]="Gonzaga"; rec[1]="(26-0)"; seed[1]="(1)";
+team[2]="App St/Nor St"; rec[2]="(17-11)"; seed[2]="(16)";
+team[3]="Oklahoma"; rec[3]="(15-10)"; seed[3]="(8)";
+team[4]="Missouri"; rec[4]="(16-9)"; seed[4]="(9)";
+team[5]="Creighton"; rec[5]="(20-8)"; seed[5]="(5)";
+team[6]="Santa Barbara"; rec[6]="(22-4)"; seed[6]="(12)";
+team[7]="Virginia"; rec[7]="(18-6)"; seed[7]="(4)";
+team[8]="Ohio"; rec[8]="(16-7)"; seed[8]="(13)";
+team[9]="USC"; rec[9]="(22-7)"; seed[9]="(6)";
+team[10]="Drake/Wichita"; rec[10]="(25-4)"; seed[10]="(11)";
+team[11]="Kansas"; rec[11]="(20-8)"; seed[11]="(3)";
+team[12]="E Washington"; rec[12]="(16-7)"; seed[12]="(14)";
+team[13]="Oregon"; rec[13]="(20-6)"; seed[13]="(7)";
+team[14]="VCU"; rec[14]="(19-7)"; seed[14]="(10)";
+team[15]="Iowa"; rec[15]="(21-8)"; seed[15]="(2)";
+team[16]="Grand Canyon"; rec[16]="(17-6)"; seed[16]="(15)";
+team[17]="Michigan"; rec[17]="(20-4)"; seed[17]="(1)";
+team[18]="Tex So/MSMary"; rec[18]="(16-8)"; seed[18]="(16)";
+team[19]="LSU"; rec[19]="(18-9)"; seed[19]="(8)";
+team[20]="St Bonavent"; rec[20]="(16-4)"; seed[20]="(9)";
+team[21]="Colorado"; rec[21]="(22-8)"; seed[21]="(5)";
+team[22]="Georgetown"; rec[22]="(13-12)"; seed[22]="(12)";
+team[23]="Florida State"; rec[23]="(16-6)"; seed[23]="(4)";
+team[24]="NC-Greensboro"; rec[24]="(21-8)"; seed[24]="(13)";
+team[25]="BYU"; rec[25]="(20-6)"; seed[25]="(6)";
+team[26]="UCLA/Michigan St"; rec[26]="(17-9)"; seed[26]="(11)";
+team[27]="Texas"; rec[27]="(19-7)"; seed[27]="(3)";
+team[28]="Abilene C"; rec[28]="(23-4)"; seed[28]="(14)";
+team[29]="Connecticut"; rec[29]="(15-7)"; seed[29]="(7)";
+team[30]="Maryland"; rec[30]="(16-13)"; seed[30]="(10)";
+team[31]="Alabama"; rec[31]="(24-6)"; seed[31]="(2)";
+team[32]="Iona"; rec[32]="(12-5)"; seed[32]="(15)";
+team[33]="Baylor"; rec[33]="(22-2)"; seed[33]="(1)";
+team[34]="Hartford"; rec[34]="(15-8)"; seed[34]="(16)";
+team[35]="North Carolina"; rec[35]="(18-10)"; seed[35]="(8)";
+team[36]="Wisconsin"; rec[36]="(17-12)"; seed[36]="(9)";
+team[37]="Villanova"; rec[37]="(16-6)"; seed[37]="(5)";
+team[38]="Winthrop"; rec[38]="(23-1)"; seed[38]="(12)";
+team[39]="Purdue"; rec[39]="(18-9)"; seed[39]="(4)";
+team[40]="North Texas"; rec[40]="(17-9)"; seed[40]="(13)";
+team[41]="Texas Tech"; rec[41]="(17-10)"; seed[41]="(6)";
+team[42]="Utah State"; rec[42]="(20-8)"; seed[42]="(11)";
+team[43]="Arkansas"; rec[43]="(22-6)"; seed[43]="(3)";
+team[44]="Colgate"; rec[44]="(14-1)"; seed[44]="(14)";
+team[45]="Florida"; rec[45]="(14-9)"; seed[45]="(7)";
+team[46]="Virginia Tech"; rec[46]="(15-6)"; seed[46]="(10)";
+team[47]="Ohio State"; rec[47]="(21-9)"; seed[47]="(2)";
+team[48]="Oral Roberts"; rec[48]="(16-10)"; seed[48]="(15)";
+team[49]="Illinois"; rec[49]="(23-6)"; seed[49]="(1)";
+team[50]="Drexel"; rec[50]="(12-7)"; seed[50]="(16)";
+team[51]="Loyola (Ill)"; rec[51]="(24-4)"; seed[51]="(8)";
+team[52]="Georgia Tech"; rec[52]="(17-8)"; seed[52]="(9)";
+team[53]="Tennessee"; rec[53]="(18-8)"; seed[53]="(5)";
+team[54]="Oregon State"; rec[54]="(17-12)"; seed[54]="(12)";
+team[55]="Oklahoma St"; rec[55]="(20-8)"; seed[55]="(4)";
+team[56]="Liberty"; rec[56]="(23-5)"; seed[56]="(13)";
+team[57]="San Diego St"; rec[57]="(23-4)"; seed[57]="(6)";
+team[58]="Syracuse"; rec[58]="(16-9)"; seed[58]="(11)";
+team[59]="West Virginia"; rec[59]="(18-9)"; seed[59]="(3)";
+team[60]="Morehead St"; rec[60]="(23-7)"; seed[60]="(14)";
+team[61]="Clemson"; rec[61]="(16-7)"; seed[61]="(7)";
+team[62]="Rutgers"; rec[62]="(15-11)"; seed[62]="(10)";
+team[63]="Houston"; rec[63]="(24-3)"; seed[63]="(2)";
+team[64]="Cleveland St"; rec[64]="(19-7)"; seed[64]="(15)";
+team[65]="Nor St"; rec[65]="(16-7)"; seed[65]="(16)";
+team[66]="Wichita"; rec[66]="(16-5)"; seed[66]="(11)";
+team[67]="MSMary"; rec[67]="(12-10)"; seed[67]="(16)";
+team[68]="Michigan St"; rec[68]="(15-12)"; seed[68]="(11)";
+regions[0]="WEST";
+regions[1]="EAST";
+regions[2]="SOUTH";
+regions[3]="MIDWEST";
+userpick[1]=0;
+userpick[2]=0;
+userpick[3]=0;
+userpick[4]=0;
+userpick[5]=0;
+userpick[6]=0;
+userpick[7]=0;
+userpick[8]=0;
+userpick[9]=0;
+userpick[10]=0;
+userpick[11]=0;
+userpick[12]=0;
+userpick[13]=0;
+userpick[14]=0;
+userpick[15]=0;
+userpick[16]=0;
+userpick[17]=0;
+userpick[18]=0;
+userpick[19]=0;
+userpick[20]=0;
+userpick[21]=0;
+userpick[22]=0;
+userpick[23]=0;
+userpick[24]=0;
+userpick[25]=0;
+userpick[26]=0;
+userpick[27]=0;
+userpick[28]=0;
+userpick[29]=0;
+userpick[30]=0;
+userpick[31]=0;
+userpick[32]=0;
+userpick[33]=0;
+userpick[34]=0;
+userpick[35]=0;
+userpick[36]=0;
+userpick[37]=0;
+userpick[38]=0;
+userpick[39]=0;
+userpick[40]=0;
+userpick[41]=0;
+userpick[42]=0;
+userpick[43]=0;
+userpick[44]=0;
+userpick[45]=0;
+userpick[46]=0;
+userpick[47]=0;
+userpick[48]=0;
+userpick[49]=0;
+userpick[50]=0;
+userpick[51]=0;
+userpick[52]=0;
+userpick[53]=0;
+userpick[54]=0;
+userpick[55]=0;
+userpick[56]=0;
+userpick[57]=0;
+userpick[58]=0;
+userpick[59]=0;
+userpick[60]=0;
+userpick[61]=0;
+userpick[62]=0;
+userpick[63]=0;
+userpick[64]=0;
+userpick[65]=0;
+userpick[66]=0;
+userpick[67]=0;
+var limitGamesToIndex = 63.000000;
+
+
+
+function GetRegionHTML(regionName) {
+ 	
+    var html = "<br>";
+	//res=confirm("This is a test "+ regionName.substr(0,1));
+	var cnt=regionName.length;
+	//res=confirm("This is a test "+ cnt);
+    for(c=0; c < cnt; c++) { 
+		html = html + regionName.charAt(c) + "<br>";
+		}
+	//res=confirm(html);
+	html = html + "<br>";
+    return html;
+	}
+
+function drawFirstFourGames() {
+	var html = '';
+
+	if (usingFirstFour && firstFourDisplayedOnTop) {
+		html = '<table width="65%" cellspacing="1" cellpadding="2"><tr><th>Round 1 - First Four Games</th></tr><tr align="center"><td class="bk_clr2" colspan="9" nowrap><table width="100%" border="0" align="center" cellpadding="5" cellspacing="0"><tr>'
+			+ '<td align="center" scope="col">' + drawFFGame(1) + '</td>'
+			+ '<td align="center" scope="col">' + drawFFGame(2) + '</td>'
+			+ '<td align="center" scope="col">' + drawFFGame(3) + '</td>'
+			+ '<td align="center" scope="col">' + drawFFGame(4) + '</td>'
+			+ '</tr></table></td></tr><tr></table>';
+	}
+		
+	return html;
+}
+
+function drawFFGame(index) {
+	var html = '';
+
+	if (firstFourTeamID[index] != '') { 
+		html = '<table cellpadding="2" cellspacing="1" class="bkt_header"><tr><td align="center" nowrap class="fld_bk_clr">'
+			+ seed[index+64] + '<br>' + seed[firstFourTeamID[index]] + '</td><td class="fld_bk_clr" nowrap>' // need to use seeds here, as 65,64 will not always be here
+			+ '<a href="javascript:Chose_Tm(' + eval(index+63) + ',' + eval(index+64) + ');" class="bTm">'
+			+ team[index+64] + ' ' + rec[index+64] + '</a><br>'
+			+ '<a href="javascript:Chose_Tm(' + eval(index+63) + ',' + firstFourTeamID[index] + ');" class="bTm">'
+			+ team[firstFourTeamID[index]] + ' ' + rec[firstFourTeamID[index]] 
+			+ '</a></td></tr></table>';
+	}
+		
+	return html;
+}
+
+
+</script>
+
+</head>
+<body> 
+<noscript>
+ <font color="#CC0000"><strong>ATTENTION: </strong></font>The OfficePool 
+ Web Entry Form requires JavaScript. If you are seeing this message this form
+ will not work. You will need to either upgrade your Web Browser OR turn on the
+ JavaScript capability.
+</noscript> 
+<form method=POST action="https://officepool.pydmsw.com/php/database/insertBracketIntoDB.php" Name=Web_Entry onSubmit="return Check_Bracket();"> 
+  <table width="100%" border="0" cellspacing="1" cellpadding="1">
+    <tr>
+      <td bgcolor="#000066" align="center"> <font size="5" face="Arial, Helvetica, sans-serif" color="#FFFFFF"><b>
+	  2021 - madness@spencersRus.com - Web Entry Form</b></font></td>
+    </tr>
+  </table>
+  <table width="600">
+    <tr>
+      <td>
+        <p><p><font size="6">PLEASE READ!</font></p>
+Picks will NOT submit on mobile devices. (phones, tablets)
+<br>MUST pick and submit on a laptop or desktop!<br><br>
+
+<b>Important Rules to follow</b></p><ol><li>Enter in your <b>name</b> and <b>e-mail address</b> and some words of wisdom</li><li>Fill out the bracket by <b>clicking on the teams</b> you think will win.</li><li>You may want to <b>print</b> the bracket for future reference.</li><li>Send me your picks by <b>hitting the Submit Entry button below.</b></li><li>An email will be sent to Kevin and also to the address specified below.</li></ol></p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <p align="center">
+          <input name="submit" type=hidden value="Submit Picks">
+          <br>
+          <font color="#000033"><b><font size="-1" color="#000066"></font></b></font></p> </td>
+    </tr>
+  </table>
+  <hr>
+  <p>
+    <!-- This is where you put YOUR e-mail. All entries will be sent to this address -->
+    <!-- The 'pool_title' variable identifies what Title you want to give your e-mail. -->
+	
+	<input type="hidden" name="recipient" value="kevin@spencersRus.com">
+    <input type="hidden" name="pool_title" value="2021 - madness@spencersRus.com">
+    <input type="hidden" name="redirect" value="http://madness.spencersRus.com">
+    <input type="hidden" name="poolMgrKey" value="kevin@spencersRus.com">
+    <input type="hidden" name="poolMgrID" value="3153">
+    <input type="hidden" name="poolFileID" value="7">
+    <input type="hidden" name="scriptURL" value="Send Email">
+
+    <!-- This will be updated once the picks are all made by the user -->
+    <input type="hidden" name="picks_data" value="">
+	<input type="hidden" name="webentry_data" value="">
+    <!-- Used so that one Email script can be used for all years -->
+    <input type="hidden" name="team_data" value="">
+    <input type="hidden" name="region_data" value="">
+    <input type="hidden" name="firstFour_data" value="">
+  </p>
+  <table cellspacing="2">
+	<tr class="fld_bk_clr"><td nowrap>Name<span class="required"> **</span> </td><td nowrap ><input name="field0" type="text" id="field0" value="" size=25></td></tr><tr class="fld_bk_wht"><td nowrap>Email<span class="required"> **</span> </td><td nowrap ><input name="field1" type="text" id="field1" value="" size=25></td></tr><tr class="fld_bk_clr"><td nowrap>Words to Live By ...<span class="required"> **</span> </td><td nowrap ><input name="field5" type="text" id="field5" value="" size=25></td></tr>
+  </table>
+  <p class="required">**  Required Field</p>
+  <hr noshade size="2"> 
+  <p>
+    <input name="bClear" type=button id="bClear" onClick=doClear() value="Clear All Picks">
+    <input name="bFavs" type=hidden id="bFavs" onClick=pickFavorites() value="Pick the Favorites">
+</p>
+
+<script language=JavaScript>document.write(drawFirstFourGames())</script>
+
+  <table class="bkt_header" cellspacing="1" cellpadding="2" width="100%" align="center"> 
+    <tr valign="middle">
+      <th width="3%" nowrap>&nbsp;</th>
+      <th width="3%" nowrap>&nbsp;</th>
+      <th width="22%" nowrap>Round of 64</th>
+      <th width="12%" nowrap>Round of 32</th>
+      <th width="12%" nowrap>Sweet 16</th>
+      <th width="12%" nowrap>Elite Eight</th>
+      <th width="12%" nowrap>Final Four</th>
+      <th colspan="2" nowrap>National Championship</th>
+    </tr>
+    <tr> 
+      <td class="bk_clr2" align="Center" rowspan="8" nowrap> 
+	  	<script language=JavaScript>document.write(GetRegionHTML(regions[0]))</script>
+        </td>
+      <td align="center" nowrap class="bk_clr1">
+	  	<script language=JavaScript>document.write(drawTableCells(1,1))</script>
+      </td>
+      <td class="bk_clr1" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(1,2))</script>&nbsp;
+      </td>
+      <td class="bk_clr2" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(1,3))</script>
+      </td>
+      <td class="bk_clr1" rowspan="2" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(1,4))</script>
+      </td>
+      <td class="bk_clr2" rowspan="4" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(1,5))</script>
+      </td>
+      <td class="bk_clr1" rowspan="8" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(1,6))</script>
+      </td>
+          
+      <td width="12%" rowspan="16" nowrap class="bk_clr2"><script language=JavaScript>document.write(writeTeam(bracketIdx[125]))</script></td> 
+      <td width="12%" rowspan="32" nowrap class="bk_clr1"><p><script language=JavaScript>document.write(writeTeam(bracketIdx[127]))</script></p>
+      
+ 
+ 
+       <p><input type=submit value="Submit Picks" name="Submit"></p></td> 
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(8)<br>
+(9)</td> 
+      <td class="bk_clr1" nowrap>
+	  <script language=JavaScript>document.write(writeTeam(bracketIdx[3]))</script>
+        <br>
+      <script language=JavaScript>document.write(writeTeam(bracketIdx[4]))</script></td> 
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[66]))</script></td> 
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(5)<br>
+(12)</td> 
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[5]))</script> 
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[6]))</script></td> 
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[67]))</script></td> 
+      <td class="bk_clr1" rowspan="2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[98]))</script></td> 
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(4)<br>
+(13)</td> 
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[7]))</script>
+        <br>
+      <script language=JavaScript>document.write(writeTeam(bracketIdx[8]))</script></td> 
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[68]))</script></td> 
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(6)<br>
+      (11)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[9]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[10]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[69]))</script></td>
+      <td class="bk_clr1" rowspan="2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[99]))</script></td> 
+      <td class="bk_clr2" rowspan="4" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[114]))</script></td> 
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(3)<br>
+      (14)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[11]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[12]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[70]))</script></td> 
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(7)<br>
+      (10)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[13]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[14]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[71]))</script></td>
+      <td class="bk_clr1" rowspan="2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[100]))</script></td> 
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(2)<br>
+      (15)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[15]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[16]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[72]))</script></td> 
+    </tr> 
+    <tr>
+      <td class="bk_clr2" align="Center" rowspan="8" nowrap> 
+	  	<script language=JavaScript>document.write(GetRegionHTML(regions[1]))</script>
+        </td>
+      <td align="center" nowrap class="bk_clr1">
+	  	<script language=JavaScript>document.write(drawTableCells(2,1))</script>
+      </td>
+      <td class="bk_clr1" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(2,2))</script>&nbsp;
+      </td>
+      <td class="bk_clr2" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(2,3))</script>
+      </td>
+      <td class="bk_clr1" rowspan="2" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(2,4))</script>
+      </td>
+      <td class="bk_clr2" rowspan="4" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(2,5))</script>
+      </td>
+      <td class="bk_clr1" rowspan="8" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(2,6))</script>
+      </td>
+
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(8)<br>
+      (9)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[19]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[20]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[74]))</script></td>
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(5)<br>
+      (12)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[21]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[22]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[75]))</script></td>
+      <td class="bk_clr1" rowspan="2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[102]))</script></td>
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(4)<br>
+      (13)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[23]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[24]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[76]))</script></td>
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(6)<br>
+      (11)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[25]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[26]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[77]))</script></td>
+      <td class="bk_clr1" rowspan="2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[103]))</script></td>
+      <td class="bk_clr2" rowspan="4" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[116]))</script></td>
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(3)<br>
+      (14)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[27]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[28]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[78]))</script></td>
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(7)<br>
+      (10)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[29]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[30]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[79]))</script></td>
+      <td class="bk_clr1" rowspan="2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[104]))</script></td>
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(2)<br>
+      (15)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[31]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[32]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[80]))</script></td>
+    </tr> 
+    <tr> 
+      <td class="bk_clr2" align="Center" rowspan="8" nowrap> 
+	  	<script language=JavaScript>document.write(GetRegionHTML(regions[2]))</script>
+        </td>
+      <td align="center" nowrap class="bk_clr1">
+	  	<script language=JavaScript>document.write(drawTableCells(3,1))</script>
+      </td>
+      <td class="bk_clr1" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(3,2))</script>&nbsp;
+      </td>
+      <td class="bk_clr2" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(3,3))</script>
+      </td>
+      <td class="bk_clr1" rowspan="2" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(3,4))</script>
+      </td>
+      <td class="bk_clr2" rowspan="4" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(3,5))</script>
+      </td>
+      <td class="bk_clr1" rowspan="8" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(3,6))</script>
+      </td>
+       
+      <td width="12%" rowspan="16" nowrap class="bk_clr2"><script language=JavaScript>document.write(writeTeam(bracketIdx[126]))</script></td> 
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(8)<br>
+  (9)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[35]))</script>
+        <br>
+      <script language=JavaScript>document.write(writeTeam(bracketIdx[36]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[82]))</script></td> 
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(5)<br>
+      (12)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[37]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[38]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[83]))</script></td>
+      <td class="bk_clr1" rowspan="2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[106]))</script></td>
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(4)<br>
+      (13)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[39]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[40]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[84]))</script></td>
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(6)<br>
+      (11)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[41]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[42]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[85]))</script></td>
+      <td class="bk_clr1" rowspan="2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[107]))</script></td>
+      <td class="bk_clr2" rowspan="4" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[118]))</script></td>
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(3)<br>
+      (14)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[43]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[44]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[86]))</script></td>
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(7)<br>
+      (10)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[45]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[46]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[87]))</script></td>
+      <td class="bk_clr1" rowspan="2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[108]))</script></td>
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(2)<br>
+      (15)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[47]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[48]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[88]))</script></td>
+    </tr> 
+    <tr>
+      <td class="bk_clr2" align="Center" rowspan="8" nowrap> 
+	  	<script language=JavaScript>document.write(GetRegionHTML(regions[3]))</script>
+        </td>
+      <td align="center" nowrap class="bk_clr1">
+	  	<script language=JavaScript>document.write(drawTableCells(4,1))</script>
+      </td>
+      <td class="bk_clr1" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(4,2))</script>&nbsp;
+      </td>
+      <td class="bk_clr2" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(4,3))</script>
+      </td>
+      <td class="bk_clr1" rowspan="2" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(4,4))</script>
+      </td>
+      <td class="bk_clr2" rowspan="4" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(4,5))</script>
+      </td>
+      <td class="bk_clr1" rowspan="8" nowrap>
+      	<script language=JavaScript>document.write(drawTableCells(4,6))</script>
+      </td>
+      
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(8)<br>
+  (9)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[51]))</script>
+        <br>
+      <script language=JavaScript>document.write(writeTeam(bracketIdx[52]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[90]))</script></td> 
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(5)<br>
+      (12)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[53]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[54]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[91]))</script></td>
+      <td class="bk_clr1" rowspan="2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[110]))</script></td>
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(4)<br>
+      (13)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[55]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[56]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[92]))</script></td>
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(6)<br>
+      (11)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[57]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[58]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[93]))</script></td>
+      <td class="bk_clr1" rowspan="2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[111]))</script></td>
+      <td class="bk_clr2" rowspan="4" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[120]))</script></td>
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(3)<br>
+      (14)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[59]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[60]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[94]))</script></td>
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(7)<br>
+      (10)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[61]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[62]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[95]))</script></td>
+      <td class="bk_clr1" rowspan="2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[112]))</script></td>
+    </tr> 
+    <tr>
+      <td align="center" nowrap class="bk_clr1">(2)<br>
+      (15)</td>
+      <td class="bk_clr1" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[63]))</script>
+        <br>
+        <script language=JavaScript>document.write(writeTeam(bracketIdx[64]))</script></td>
+      <td class="bk_clr2" nowrap><script language=JavaScript>document.write(writeTeam(bracketIdx[96]))</script></td>
+    </tr> 
+  </table> 
+  
+</form> 
+ <script language="JavaScript" type="text/JavaScript">
+<!--
+   window.onload = Initialize_Bracket;
+// -->
+</script> 
+</body>
+</html>
